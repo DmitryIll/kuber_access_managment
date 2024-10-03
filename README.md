@@ -47,11 +47,53 @@ cat kubereader.csr | base64 | tr -d '\n'
 ```
 ![alt text](image-2.png)
 
-Копирую код в запрос:
+Копирую код в запрос (создаю файл):
 
 ```
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: kubereader-csr
+spec:
+  # groups:
+  # - system: authenticated
+  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1dqQ0NBVUlDQVFBd0ZURVRNQkVHQTFVRUF3d0thM1ZpWlhKbFlXUmxjakNDQVNJd0RRWUpLb1pJaHZjTgpBUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTmhyaWMzQXBGckhnNEF1bmErOVJRYktUVEszVXBRNytQYkRNbCs3Ck9JOEVtSTZuUkVyTVVRR1ZsdEhqdVlxcm9MZGhEWU9pOVhsdEpSN2pIbVZoUHBONVZyTFpOWnV6b3QyeCtqY0UKQ0FtZGNRZFo0M3pvdDZ5SGU0cWtEdHg5N01yMVZscEhUeElWeGZPWFd0L0F3RnBhVDFLeElIMEZ1cE5qMzF6RQpoOGh5ZHJRaUdHSnJEaForeFhjYU1JcC83Z01WbnI1RXpPeVNNTVRyajhRQjg3Q3BlV2NBWFhhRzJrL2RtUzZsCjZuemJWci85U3JoNlc2enZ2VlloR1VMeXZjdGM0V2ZtRGt1enc0NzBZVlpmeE9NVjV1K2EzbkhqVytVTUU5MmUKcXFTNnNxMmdhMXhiM3JIbktJMXBVR1hwZGJNUlc4eWQzNkVZYTRRZStsd25sVlVDQXdFQUFhQUFNQTBHQ1NxRwpTSWIzRFFFQkN3VUFBNElCQVFCelZmMUQyZG9jZnpINnQ5YnUxZU0yNm9RRHk4ckVwRWRYTjZCQ0g2ODc2MGhkCjE5RmRmUDFOSnNYeEFiN1M5ckhCZzNsVUpaY2FrQitUTWtQTDgzR0R2U0cybDdFRFRjQ1pMS0d3OUdMTEF4TGsKc21tTXRqQ0FyQjBqZUZvdW5Vb2MzTkhzL3R3ZGZJN3JtRERIKytOS3ltSnhxdTIvMnNHcG5UTUVOblYrRWRHcwpCbHVOa1I1V2RnMUhuYTdJWG9DMHptd3pQVHJDblNxM3JUNHdDekV4Q1pGdWpTM2FMbWsybFk1SmVWNlkwM1ExClNyTWlYRHdHR3IvaTg5MkRQNXoxcGI0aGxKSVJGN1g2VzBYZUoxNFN0alpzbnlVTTZxNUVPN2tDbCtBSTFqRlkKV1J2b2RCMzIzVTFpNmNtOVBkam5IQ1RKd1ZxN25OdTRFTTBTYUxVTQotLS0tLUVORCBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K
+  signerName: kubernetes.io/kube-apiserver-client-kubelet
+  usages:
+  - digital signature
+  - key encipherment
+  - server auth
+  - client auth
+```
+
+Применяю:
 
 ```
+kubectl -f ssl-csr.yaml apply
+```
+![alt text](image-3.png)
+
+
+![alt text](image-4.png)
+
+```
+kubectl describe csr kubereader-csr
+```
+![alt text](image-5.png)
+
+```
+kubectl certificate approve kubereader-csr
+```
+![alt text](image-6.png)
+
+Видимо что-то не сработало:
+
+![alt text](image-7.png)
+
+- Failed
+
+Почему?
+Что не так?
 
 2. Настройте конфигурационный файл kubectl для подключения.
 3. Создайте роли и все необходимые настройки для пользователя.
