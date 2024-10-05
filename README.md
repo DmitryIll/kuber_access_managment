@@ -277,8 +277,37 @@ kubectl create namespace my-project-dev
 
 ![alt text](image-27.png)
 
+![alt text](image-28.png)
 
+Еще выполнил:
 
+```
+microk8s enable rbac
+```
+
+Создал файл роли:
+
+```
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: list-deployments
+  namespace: my-project-dev
+rules:
+  - apiGroups: [ apps ]
+    resources: [ deployments ]
+    verbs: [ get, list ]
+```
+
+Пробую применить:
+
+```
+ kubectl -f role.yaml apply
+```
+
+![alt text](image-29.png)
+
+Пока не понял...
 
 2. Настройте конфигурационный файл kubectl для подключения.
 3. Создайте роли и все необходимые настройки для пользователя.
