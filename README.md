@@ -164,9 +164,59 @@ openssl x509 -req -in jean.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubern
 Но:
 ![alt text](image-11.png)
 
-я не нашел где в mikrok8s есть эти файлы?
+Но, нашел где эти файлы, продвинулся дальше:
 
-Как быть?
+```
+openssl x509 -req -in jean.csr -CA /var/snap/microk8s/current/certs/ca.crt -CAkey /var/snap/microk8s/current/certs/ca.key -CAcreateserial -out jean.crt -days 500
+```
+![alt text](image-12.png)
+
+Получил файл с сертификатом:
+
+![alt text](image-13.png)
+
+Опять через буфер обмена переношу пользователя на рабочий ПК:
+
+![alt text](image-14.png)
+
+![alt text](image-15.png)
+
+Т.е. закрытый ключ jean не покидал рабочего ПК (что и положено по безопасности).
+
+Только еще скопировал файлы в папку .certs:
+
+![alt text](image-16.png)
+
+Создаю пользователя:
+
+```
+kubectl config set-credentials jean \
+--client-certificate=/home/jean/.certs/jean.crt \
+--client-key=/home/jean/.certs/jean.key
+```
+
+![alt text](image-17.png)
+
+Создаю контекст:
+
+```
+kubectl config set-context jean-context \
+--cluster=kubernetes --user=jean
+```
+
+![alt text](image-18.png)
+
+Неожиданно оказалось что в файле /roor/kubeconf уже обновленные данные - там появилась jean (пока не понял как):
+
+![alt text](1.png)
+
+Осталось убрать админа подкорректировать и сохранить в папке для jean.
+
+Создаю папку .kube для jean и туда помещаю конфиг:
+
+
+
+
 
 2. Настройте конфигурационный файл kubectl для подключения.
 3. Создайте роли и все необходимые настройки для пользователя.
