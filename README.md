@@ -206,14 +206,76 @@ kubectl config set-context jean-context \
 
 ![alt text](image-18.png)
 
-Неожиданно оказалось что в файле /roor/kubeconf уже обновленные данные - там появилась jean (пока не понял как):
+Неожиданно оказалось что в файле /roor/kubeconf уже обновленные данные - там появилась jean (видимо т.к. он подключен то мкрок8s его подправил):
 
 ![alt text](1.png)
 
-Осталось убрать админа подкорректировать и сохранить в папке для jean.
+Но, видимо не корректо кластер указал, т.к. у нас кластер другой, иправляю, еще раз:
+
+```
+kubectl config set-context jean-context \
+--cluster=microk8s-cluster --user=jean
+```
+
+![alt text](image-19.png)
+
+```
+kubectl config view
+```
+
+![alt text](image-20.png)
+
+Смотрю подключенный конфиг-файл:
+
+![alt text](image-21.png)
+
+Но, при этом сертификат там указан в верху для админа. нужно будет поменять.
 
 Создаю папку .kube для jean и туда помещаю конфиг:
 
+```
+cp /root/kubeconf /home/jean/.kube/config
+```
+Беру данные из серта:
+
+```
+cat /home/jean/.certs/jean.crt | tr -d '\n'
+```
+
+![alt text](image-22.png)
+
+Копипащу:
+
+![alt text](image-23.png)
+
+B вставляю в файл:
+
+```
+nano /home/jean/.kube/config
+```
+Вставляю что нужно и пока закомментирую то, что не нужно:
+
+![alt text](image-25.png)
+
+```
+chown -R jean: /home/jean/
+```
+
+Попробовал подключиться от jean:
+
+![alt text](image-26.png)
+
+Пока без успешно.
+
+Пока дальше:
+
+Создаю неймспейс:
+
+```
+kubectl create namespace my-project-dev
+```
+
+![alt text](image-27.png)
 
 
 
