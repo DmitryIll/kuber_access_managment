@@ -1,9 +1,13 @@
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
 metadata:
-  name: list-deployments
   namespace: my-project-dev
+  name: reader
 rules:
-  - apiGroups: [ apps ]
-    resources: [ deployments ]
-    verbs: [ get, list ]
+  - apiGroups: [ "" ]
+    resources: ["pods","pods/log"]
+    verbs: ["get", "watch", "list"]
+
+
+
+   
