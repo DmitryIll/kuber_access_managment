@@ -90,6 +90,22 @@ kubectl certificate approve kubereader-csr
 
 ![alt text](image-7.png)
 
+```
+kubectl get csr/${SERVICE}.${NAMESPACE} \
+--output=jsonpath="{.status}" \
+| jq .
+```
+
+![alt text](image-8.png)
+
+Предполагаю проблемв  в 
+
+```
+"reason": "SignerValidationFailure"
+```
+
+
+
 - Failed
 
 Почему?
