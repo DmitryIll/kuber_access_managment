@@ -220,6 +220,12 @@ kubectl config set-context jean-context \
 ![alt text](image-19.png)
 
 ```
+kubectl config get-contexts
+```
+
+![alt text](image-30.png)
+
+```
 kubectl config view
 ```
 
@@ -291,12 +297,12 @@ microk8s enable rbac
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
 metadata:
-  name: list-deployments
   namespace: my-project-dev
+  name: reader
 rules:
-  - apiGroups: [ apps ]
-    resources: [ deployments ]
-    verbs: [ get, list ]
+  - apiGroups: [ "" ]
+    resources: ["pods","pods/log"]
+    verbs: ["get", "watch", "list"]
 ```
 
 Пробую применить:
@@ -304,10 +310,13 @@ rules:
 ```
  kubectl -f role.yaml apply
 ```
+Но, ошибка:
 
-![alt text](image-29.png)
+![alt text](image-31.png)
 
-Пока не понял...
+
+Пока не понял что это значит и в чем причина?
+
 
 2. Настройте конфигурационный файл kubectl для подключения.
 3. Создайте роли и все необходимые настройки для пользователя.
