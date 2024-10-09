@@ -25,6 +25,12 @@
 ### Задание 1. Создайте конфигурацию для подключения пользователя
 
 1. Создайте и подпишите SSL-сертификат для подключения к кластеру.
+2. Настройте конфигурационный файл kubectl для подключения.
+3. Создайте роли и все необходимые настройки для пользователя.
+4. Предусмотрите права пользователя. Пользователь может просматривать логи подов и их конфигурацию (`kubectl logs pod <pod_id>`, `kubectl describe pod <pod_id>`).
+5. Предоставьте манифесты и скриншоты и/или вывод необходимых команд.
+
+#### Решение
 
 На рабочей ВМ выполнил (от куда пользователь будет коннектиться): 
 
@@ -47,10 +53,12 @@ cat kubereader.csr | base64 | tr -d '\n'
 ```
 ![alt text](image-2.png)
 
+
+#### Тут сначало пошло не так, но, оставил для истории, правильное решение см. далее
+
 Копирую код в запрос (создаю файл):
 
-
-Но: тут неверное решение - был выбран не тот подписчик, у которого есть ограничения на имя CN, поэтому не заработало, оставляю для истори, решение верное потом будет.
+Тут было далее неверное решение - был выбран не тот подписчик, у которого есть ограничения на имя CN, поэтому не заработало, оставляю для истори, решение верное - см. далее.
 
 ```
 apiVersion: certificates.k8s.io/v1
@@ -89,7 +97,7 @@ kubectl certificate approve kubereader-csr
 ```
 ![alt text](image-6.png)
 
-Видимо что-то не сработало:
+Не сработало:
 
 ![alt text](image-7.png)
 
@@ -133,7 +141,7 @@ spec:
 
 ![alt text](image-10.png)
 
-
+Разбор сбоя:
 Потому что:
 https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/#kubernetes-signers
 
@@ -144,6 +152,10 @@ Permitted subjects - organizations are exactly ["system:nodes"], common name is 
 ```
 а у меня CN другое. 
 Поэтому переделал на другого "подписателя" и еще некоторые ошибки исправил:
+
+#### Теперь правильное ршеение
+
+Создаю запрос на подпись сертификата пользователя:
 
 ```
 apiVersion: certificates.k8s.io/v1
@@ -187,6 +199,169 @@ kubectl get csr/kubereader-csr4 --output=jsonpath="{.status}" | jq .
 ```
 
 ![alt text](image-42.png)
+
+Далее:
+2. Настройте конфигурационный файл kubectl для подключения.
+
+Полученый серт кладу в папку пользователя и переименовываю:
+
+```
+cd /home/kubereader/
+cert.crt /home/kubereader/
+cp cert.crt kubereader.crt
+```
+
+Создаю пользователя:
+```
+kubectl config set-credentials kubereader --client-certificate=/home/kubereader/kubereader.crt --client-key=/home/kubereader/kubereader.key
+```
+![alt text](image-43.png)
+
+Создаю новый контекст:
+```
+kubectl config set-context kubereader-context --cluster=microk8s-cluster --user=kubereader
+```
+![alt text](image-44.png)
+
+
+Посмотреть контекст:
+```
+kubectl config view
+```
+![alt text](image-45.png)
+
+Кладу конфиг в папку пользователя:
+```
+cp /root/kubeconf /home/kubereader/kubeconf
+```
+
+Правлю конфиг чтобы контекст kubereader был текущим:
+
+![alt text](image-46.png)
+
+Пробую подключиться:
+![alt text](image-47.png)
+и это нормально, главное что пробует подключиться от kubereader но права еще не настроены.
+
+Файл конфига для подключения готов.
+Далее настрою права.
+
+#### Создание роли 
+
+Подключаюсь опять от админа.
+
+3. Создайте роли и все необходимые настройки для пользователя.
+4. Предусмотрите права пользователя. Пользователь может просматривать логи подов и их конфигурацию (`kubectl logs pod <pod_id>`, `kubectl describe pod <pod_id>`).
+5. Предоставьте манифесты и скриншоты и/или вывод необходимых команд.
+
+Создаю немйспейс:
+
+```
+kubectl create namespace my-project-dev
+```
+
+![alt text](image-48.png)
+
+Уже ранее включал на ВМ с кубером:
+
+```
+microk8s enable rbac
+```
+![alt text](image-49.png)
+
+Создаю роль:
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: my-project-dev
+  name: reader
+rules:
+  - apiGroups: [ "" ]
+    resources: ["pods","pods/log"]
+    verbs: ["get", "watch", "list"]
+```
+
+![alt text](image-50.png)
+
+```
+kubectl get roles
+```
+
+![alt text](image-51.png)
+
+Привязываю роль к пользователю:
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader
+  namespace: my-project-dev
+subjects:
+- kind: User
+  name: kubereader
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
+![alt text](image-52.png)
+
+```
+kubectl get rolebinding -n my-project-dev
+```
+
+![alt text](image-55.png)
+
+
+Пробую подключиться от пользователя:
+
+![alt text](image-53.png)
+![alt text](image-54.png)
+
+возвращаюсь на подключения админа и создаю деплой.
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-my-project
+  namespace: ny-project-dev
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+      - name: multitool
+        image: wbitt/network-multitool
+        env:
+        - name: HTTP_PORT
+          value: "8080"
+        - name: HTTPS_PORT
+          value: "11443"
+        ports:
+        - containerPort: 8080
+          name: http-port
+        - containerPort: 11443
+          name: https-port
+```
+
 
 
 
@@ -376,10 +551,7 @@ rules:
 Пока не понял что это значит и в чем причина?
 
 
-2. Настройте конфигурационный файл kubectl для подключения.
-3. Создайте роли и все необходимые настройки для пользователя.
-4. Предусмотрите права пользователя. Пользователь может просматривать логи подов и их конфигурацию (`kubectl logs pod <pod_id>`, `kubectl describe pod <pod_id>`).
-5. Предоставьте манифесты и скриншоты и/или вывод необходимых команд.
+
 
 ------
 
