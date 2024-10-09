@@ -10,7 +10,8 @@ spec:
   signerName:   kubernetes.io/kube-apiserver-client
   #signerName: kubernetes.io/kube-apiserver-client-kubelet
   usages:
-  - digital signature
-  - key encipherment
-  - server auth
+  # - digital signature
+  # - key encipherment
+  # - server auth
   - client auth
+  
