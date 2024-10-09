@@ -1,7 +1,7 @@
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
 metadata:
-  name: kubereader-csr3
+  name: kubereader-csr4
 spec:
   #groups:
   #- system: authenticated
